@@ -750,9 +750,22 @@ const RelationModalWithContext = ({
 
   const options = data?.results ?? [];
 
+  const connectedLabels = React.useMemo(() => {
+    const labels = new Set<string>();
+
+    for (const relation of fieldValue?.connect ?? []) {
+      if (relation.label) {
+        labels.add(relation.label);
+      }
+    }
+
+    return labels;
+  }, [fieldValue]);
+
   React.useLayoutEffect(() => {
     setTextValue('');
-  }, [fieldValue]);
+    setSearchParams((search) => ({ ...search, _q: '', page: 1 }));
+  }, [fieldValue, setSearchParams]);
 
   const handleSearch = async (search: string) => {
     setSearchParams((s) => ({ ...s, _q: search, page: 1 }));
@@ -814,10 +827,20 @@ const RelationModalWithContext = ({
           textValue={textValue}
           onChange={handleChange}
           onTextValueChange={(text) => {
+            if (connectedLabels.has(text)) {
+              return;
+            }
+
             setTextValue(text);
           }}
           onInputChange={(event) => {
-            handleSearch(event.currentTarget.value);
+            const value = event.currentTarget.value;
+
+            if (connectedLabels.has(value)) {
+              return;
+            }
+
+            handleSearch(value);
           }}
           {...props}
         >
